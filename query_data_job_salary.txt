@@ -1,0 +1,97 @@
+Create table data_job_salary(
+work_year integer,
+experience_level text,
+employment_type text,
+job_title text,
+salary integer,
+salary_currency text,
+salary_in_usd integer,
+employee_residence text,
+remote_ratio integer,
+company_location text,
+company_size text
+)
+Copy data_job_salary
+from 'C:\Users\tuyet\Downloads\DataScienceJobsSalaries.csv'
+With(format csv, header,delimiter  ';');
+
+select * from data_job_salary
+
+-- find number of data employees in each year
+Create view  Num_Employees as
+select work_year,experience_level, employment_type,count (*) as employee_count
+from data_job_salary
+group by 1,2,3
+order by 1,2
+
+-- count of employees based on job_title
+WITH t1 as (select work_year, job_title,count (job_title) as employee_count
+from data_job_salary
+group by 1,2)
+Select t20.job_title,t20.employee_count as count_in_2020 ,t21.employee_count as count_in_2021
+from t1 as t20
+left join t1 as t21
+on t20.work_year < t21.work_year 
+and t20.job_title = t21.job_title
+
+--average salary based on experience_level in each year
+Create view Avg_Salary as 
+select work_year, experience_level ,avg(salary_in_usd)
+from data_job_salary
+group by 1,2
+order by 1,2
+
+-- find the propotion of employees based on experience_level
+Select experience_level , count(experience_level),
+count(experience_level) * 100.0 / (select count(*) from data_job_salary) as ratio
+from data_job_salary
+group by 1
+order by 1
+
+--find the maximum number employees in each position based on experience level
+With t1 as (Select job_title,experience_level, count(experience_level) as num_employees
+from data_job_salary
+group by 1,2
+),
+t2 as(
+Select job_title,max(num_employees) over (partition by job_title) as max_employees
+From t1
+)
+Select distinct t1.job_title,t1.experience_level,t2.max_employees
+from t1
+inner join t2
+on t1.job_title = t2.job_title and t1.num_employees = t2.max_employees
+order by 3 desc
+
+--find the highest average salaries in each position ammong contries
+With t3 as (select job_title,company_location,avg(salary_in_usd) avg_salary
+from data_job_salary
+group by 1,2)
+select job_title,max(avg_salary) max_avg_salary
+from t3
+group by 1
+
+--find popular company location
+create view company_location as
+select company_location,employment_type,count(*)
+from data_job_salary
+group by 1,2
+order by 1
+
+-- find avg_salaries of 3 job_title
+Select job_title, avg(salary_in_usd)
+from(select job_title, salary_in_usd
+from data_job_salary
+where job_title in ('Data Scientist','Data Engineer','Data Analyst'))
+group by 1
+
+-- choose top 3 popular data jobs
+create view top_3_popular_datajob as
+select *
+from data_job_salary
+where job_title in ('Data Scientist','Data Engineer','Data Analyst')
+
+create view remote_work as
+select remote_ratio, count(*)
+from data_job_salary
+group by 1
