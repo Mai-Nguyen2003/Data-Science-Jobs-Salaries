@@ -1,3 +1,4 @@
+-- CREATE query table
 Create table data_job_salary(
 work_year integer,
 experience_level text,
@@ -11,6 +12,7 @@ remote_ratio integer,
 company_location text,
 company_size text
 )
+
 Copy data_job_salary
 from 'C:\Users\tuyet\Downloads\DataScienceJobsSalaries.csv'
 With(format csv, header,delimiter  ';');
